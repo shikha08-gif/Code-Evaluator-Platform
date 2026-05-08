@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Submission History</title>
+
+<style>
+body{
+ font-family:Segoe UI;
+ background:#0f172a;
+ color:white;
+ margin:0;
+ padding:30px;
+}
+
+.container{
+ max-width:1000px;
+ margin:auto;
+}
+
+h2{
+ text-align:center;
+ margin-bottom:20px;
+}
+
+/* controls */
+.controls{
+ display:flex;
+ gap:10px;
+ flex-wrap:wrap;
+ margin-bottom:20px;
+}
+
+input,select{
+ padding:10px;
+ border:none;
+ border-radius:8px;
+ background:#1f2937;
+ color:white;
+}
+
+/* card */
+.entry{
+ background:#111827;
+ border-radius:14px;
+ padding:18px;
+ margin-bottom:15px;
+ box-shadow:0 10px 25px rgba(0,0,0,.5);
+}
+
+.meta{
+ display:flex;
+ gap:10px;
+ flex-wrap:wrap;
+ align-items:center;
+}
+
+.badge{
+ padding:5px 10px;
+ border-radius:999px;
+ font-size:13px;
+ font-weight:bold;
+}
+
+.lang{background:#38bdf8;color:black}
+.res{background:#34d399;color:black}
+.failed{background:#f87171;color:black}
+
+/* buttons */
+.btn{
+ padding:8px 14px;
+ border:none;
+ border-radius:8px;
+ cursor:pointer;
+ margin-top:10px;
+ margin-right:6px;
+}
+
+.view{background:#3b82f6;color:white}
+.copy{background:#22c55e;color:black}
+.delete{background:#ef4444;color:white}
+
+pre{
+ background:#020617;
+ padding:12px;
+ border-radius:10px;
+ margin-top:10px;
+ overflow:auto;
+ display:none;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h2>Submission History</h2>
+
+<div class="controls">
+<input id="search" placeholder="Search problem...">
+<select id="langFilter">
+<option value="">All Languages</option>
+</select>
+</div>
+
+<div id="list">Loading...</div>
+
+</div>
+
+<script>
+
+const listEl = document.getElementById("list");
+let allData=[];
+const user = localStorage.getItem("user");
+
+if(!user){
+ listEl.innerHTML="<p>Login required</p>";
+}
+else{
+ fetch("/history/"+encodeURIComponent(user))
+ .then(r=>r.json())
+ .then(data=>{
+   allData=data||[];
+   render();
+ })
+ .catch(()=>listEl.innerHTML="<p>Server error</p>");
+}
+
+
+/* render function */
+
+function render(){
+
+ const search =
+ document.getElementById("search").value.toLowerCase();
+
+ const lang =
+ document.getElementById("langFilter").value;
+
+
+ let arr=[...allData];
+
+ /* filter search */
+ if(search){
+  arr=arr.filter(s=>
+   (s.title||"").toLowerCase().includes(search)
+  );
+ }
+
+ /* filter lang */
+ if(lang){
+  arr=arr.filter(s=>s.language===lang);
+ }
+
+
+ if(!arr.length){
+  listEl.innerHTML="<p>No results</p>";
+  return;
+ }
+
+ listEl.innerHTML = arr.map((s,i)=>{
+
+  const resClass =
+   (s.result||"").toLowerCase().includes("accept")
+   ? "res" : "failed";
+
+  return `
+  <div class="entry">
+
+    <div class="meta">
+      <h3>${s.title||"Problem"}</h3>
+      <span class="badge lang">${s.language}</span>
+      <span class="badge ${resClass}">
+        ${s.result}
+      </span>
+      <small style="margin-left:auto">
+        ${s.created||""}
+      </small>
+    </div>
+
+    <button class="btn view"
+     onclick="toggle(${i})">
+     View Code
+    </button>
+
+    <button class="btn copy"
+     onclick="copyCode(${i})">
+     Copy
+    </button>
+
+    <button class="btn delete"
+     onclick="deleteSub('${s.id||i}')">
+     Delete
+    </button>
+
+    <pre id="code${i}">
+${escapeHtml(s.code||"")}
+    </pre>
+
+  </div>
+  `;
+ }).join("");
+}
+
+
+/* toggle code */
+function toggle(i){
+ const el=document.getElementById("code"+i);
+ el.style.display=
+  el.style.display==="block"?"none":"block";
+}
+
+
+/* copy code */
+function copyCode(i){
+ const text=
+ document.getElementById("code"+i).innerText;
+
+ navigator.clipboard.writeText(text);
+ alert("Copied!");
+}
+
+
+/* delete */
+function deleteSub(id){
+
+ if(!confirm("Delete submission?")) return;
+
+ fetch("/delete/"+id,{method:"DELETE"})
+ .then(()=>{
+
+  allData=
+  allData.filter(s=>String(s.id)!==String(id));
+
+  render();
+ })
+ .catch(()=>alert("Error deleting submission"));
+}
+
+
+/* escape html */
+function escapeHtml(str){
+ return String(str)
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;");
+}
+
+
+/* listeners */
+
+document.getElementById("search").oninput=render;
+document.getElementById("langFilter").onchange=render;
+
+</script>
+</body>
+</html>

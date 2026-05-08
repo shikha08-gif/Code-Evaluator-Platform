@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Problems</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+ margin:0;
+ padding:0;
+ box-sizing:border-box;
+ font-family:'Poppins',sans-serif;
+}
+
+body{
+ background:linear-gradient(135deg,#0f172a,#1e293b);
+ color:white;
+ min-height:100vh;
+}
+
+/* BACK BUTTON */
+.back-btn{
+ position:fixed;
+ bottom:20px;
+ left:20px;
+ padding:12px 20px;
+ border:none;
+ border-radius:25px;
+ background:linear-gradient(135deg, #60a5fa, #3b82f6);
+ color:white;
+ font-size:15px;
+ font-weight:600;
+ cursor:pointer;
+ transition:.3s;
+ border:2px solid #93c5fd;
+ z-index:1000;
+ box-shadow:0 0 20px rgba(96,165,250,0.4);
+ display:flex;
+ align-items:center;
+ gap:6px;
+}
+
+.back-btn:hover{
+ background:linear-gradient(135deg, #3b82f6, #1d4ed8);
+ box-shadow:0 0 30px rgba(96,165,250,0.7);
+ transform:translateY(-3px);
+}
+
+/* NAVBAR */
+.nav{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ padding:15px 40px;
+ background:rgba(255,255,255,.05);
+ backdrop-filter:blur(10px);
+ border-bottom:1px solid rgba(255,255,255,.1);
+}
+
+.logo{
+ font-size:22px;
+ font-weight:700;
+ color:#60a5fa;
+}
+
+.nav button{
+ background:#3b82f6;
+ border:none;
+ padding:8px 18px;
+ border-radius:8px;
+ color:white;
+ cursor:pointer;
+ transition:.3s;
+}
+
+.nav button:hover{
+ background:#2563eb;
+ transform:scale(1.05);
+}
+
+
+/* TITLE */
+h2{
+ text-align:center;
+ margin:25px 0 10px;
+ font-weight:600;
+ letter-spacing:1px;
+}
+
+.count{
+ text-align:center;
+ color:#94a3b8;
+ margin-bottom:15px;
+}
+
+
+/* CONTROLS */
+.controls{
+ display:flex;
+ justify-content:center;
+ gap:12px;
+ margin-bottom:20px;
+}
+
+input,select{
+ padding:10px 14px;
+ border-radius:10px;
+ border:none;
+ outline:none;
+ background:#1e293b;
+ color:white;
+ box-shadow:0 0 0 1px rgba(255,255,255,.1);
+}
+
+input::placeholder{
+ color:#94a3b8;
+}
+
+
+/* PROBLEM CARD */
+.problem{
+ width:650px;
+ margin:18px auto;
+ padding:18px;
+ border-radius:16px;
+ background:rgba(255,255,255,.05);
+ backdrop-filter:blur(8px);
+ box-shadow:0 10px 25px rgba(0,0,0,.35);
+ transition:.3s;
+ animation:fade .4s ease;
+}
+
+@keyframes fade{
+ from{opacity:0; transform:translateY(10px)}
+ to{opacity:1; transform:translateY(0)}
+}
+
+.problem:hover{
+ transform:translateY(-5px);
+ box-shadow:0 15px 35px rgba(0,0,0,.5);
+}
+
+.problem h3{
+ margin-bottom:6px;
+}
+
+
+/* DIFFICULTY */
+.diff{
+ padding:4px 12px;
+ border-radius:20px;
+ font-size:12px;
+ font-weight:600;
+}
+
+.easy{background:#16a34a}
+.medium{background:#facc15;color:black}
+.hard{background:#ef4444}
+
+
+/* BUTTON */
+.solveBtn{
+ margin-top:12px;
+ background:#3b82f6;
+ border:none;
+ padding:9px 20px;
+ border-radius:10px;
+ color:white;
+ cursor:pointer;
+ transition:.3s;
+}
+
+.solveBtn:hover{
+ background:#2563eb;
+ transform:scale(1.05);
+}
+
+
+/* PAGINATION */
+.pagination{
+ text-align:center;
+ margin:30px;
+}
+
+.pageBtn{
+ padding:10px 20px;
+ margin:5px;
+ border:none;
+ border-radius:10px;
+ background:#1e293b;
+ color:white;
+ cursor:pointer;
+ transition:.3s;
+}
+
+.pageBtn:hover:not(:disabled){
+ background:#3b82f6;
+}
+
+.pageBtn:disabled{
+ opacity:.4;
+ cursor:not-allowed;
+}
+
+#page{
+ margin:0 12px;
+ font-weight:500;
+ color:#60a5fa;
+}
+
+</style>
+</head>
+<body>
+
+<button class="back-btn" onclick="goBack()">← Back to Home</button>
+
+<!-- NAVBAR -->
+<div class="nav">
+<div class="logo">CodeEditor Pro</div>
+<button onclick="location.href='history.html'">History</button>
+<button onclick="logout()">Logout</button>
+</div>
+
+
+<h2>Problem List</h2>
+<div class="count" id="count"></div>
+
+
+<!-- CONTROLS -->
+<div class="controls">
+<input id="search" placeholder="Search problems...">
+<select id="filter">
+<option value="">All</option>
+<option value="Easy">Easy</option>
+<option value="Medium">Medium</option>
+<option value="Hard">Hard</option>
+</select>
+</div>
+
+
+<div id="list">Loading problems...</div>
+
+
+<!-- PAGINATION -->
+<div class="pagination">
+<button class="pageBtn" id="prevBtn">Prev</button>
+<span id="page"></span>
+<button class="pageBtn" id="nextBtn">Next</button>
+</div>
+
+
+<script>
+
+let problems=[];
+let page=1;
+const limit=5;
+
+
+/* LOAD DATA */
+async function load(){
+ let res=await fetch("/problems");
+ problems=await res.json();
+ render();
+}
+load();
+
+
+/* FILTER + RENDER */
+function render(){
+
+ let search=document.getElementById("search").value.toLowerCase();
+ let filter=document.getElementById("filter").value;
+
+ let filtered=problems.filter(p=>
+  p.title.toLowerCase().includes(search) &&
+  (filter=="" || p.difficulty==filter)
+ );
+
+ let totalPages=Math.max(1,Math.ceil(filtered.length/limit));
+
+ if(page>totalPages) page=totalPages;
+
+ let start=(page-1)*limit;
+ let slice=filtered.slice(start,start+limit);
+
+ let list=document.getElementById("list");
+
+ document.getElementById("count").innerText=
+ `${filtered.length} Problems Found`;
+
+ if(!slice.length){
+  list.innerHTML="<p style='text-align:center'>No problems found</p>";
+  return;
+ }
+
+ let html="";
+
+ slice.forEach(p=>{
+
+ let diffClass=(p.difficulty||"Easy").toLowerCase();
+
+ html+=`
+ <div class="problem">
+  <h3>${p.title}</h3>
+
+  <span class="diff ${diffClass}">
+   ${p.difficulty||"Easy"}
+  </span>
+
+  <p style="margin-top:10px">
+   ${p.description.substring(0,90)}...
+  </p>
+
+  <button class="solveBtn" onclick="solve(${p.id})">
+   Solve Challenge
+  </button>
+ </div>
+ `;
+ });
+
+ list.innerHTML=html;
+
+
+ /* PAGE INFO */
+ document.getElementById("page").innerText=
+ `Page ${page} / ${totalPages}`;
+
+
+ /* BUTTON STATES */
+ document.getElementById("prevBtn").disabled = page===1;
+ document.getElementById("nextBtn").disabled = page===totalPages;
+}
+
+
+/* SEARCH */
+search.oninput=()=>{page=1;render();}
+search.onkeypress=e=>{ if(e.key==="Enter"){page=1;render();} }
+
+filter.onchange=()=>{page=1;render();}
+
+
+/* PAGINATION */
+document.getElementById("nextBtn").onclick=()=>{
+ page++;
+ render();
+};
+
+document.getElementById("prevBtn").onclick=()=>{
+ if(page>1) page--;
+ render();
+};
+
+
+/* OPEN PROBLEM */
+function solve(id){
+ localStorage.setItem("pid",id);
+ location.href="editor.html";
+}
+
+
+/* LOGOUT */
+function logout(){
+ localStorage.removeItem("user");
+ location.href="login.html";
+}
+
+function goBack(){
+ window.history.back();
+}
+
+</script>
+
+</body>
+</html>

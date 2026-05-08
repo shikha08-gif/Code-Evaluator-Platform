@@ -1,0 +1,137 @@
+/* RESET */
+*{
+ margin:0;
+ padding:0;
+ box-sizing:border-box;
+ font-family:Segoe UI,sans-serif;
+}
+
+body{
+ height:100vh;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ background:#070916;
+ overflow:hidden;
+ color:white;
+}
+
+/* ANIMATED BACKGROUND */
+body::before{
+ content:"";
+ position:absolute;
+ width:200%;
+ height:200%;
+ background:
+ radial-gradient(circle at 20% 30%,#00f2ff33,transparent 40%),
+ radial-gradient(circle at 80% 70%,#ff00cc33,transparent 40%);
+ animation:bg 18s linear infinite alternate;
+}
+
+@keyframes bg{
+ from{transform:translate(0,0)}
+ to{transform:translate(-10%,-10%)}
+}
+
+/* CARD */
+.box{
+ position:relative;
+ width:350px;
+ padding:40px 35px;
+ border-radius:22px;
+ background:rgba(255,255,255,0.05);
+ backdrop-filter:blur(25px);
+ border:1px solid rgba(255,255,255,0.1);
+ text-align:center;
+ box-shadow:
+ 0 0 40px #00f2ff22,
+ inset 0 0 20px #ffffff11;
+ animation:fade 1s ease;
+}
+
+@keyframes fade{
+ from{opacity:0; transform:translateY(40px)}
+ to{opacity:1; transform:translateY(0)}
+}
+
+/* TITLE */
+.box h2{
+ margin-bottom:25px;
+ font-size:30px;
+ background:linear-gradient(90deg,#00f2ff,#ff00cc);
+ -webkit-background-clip:text;
+ color:transparent;
+}
+
+/* INPUT */
+.box input{
+ width:100%;
+ margin:14px 0;
+ padding:14px;
+ border-radius:30px;
+ border:none;
+ outline:none;
+ background:#0e1628;
+ color:white;
+ font-size:15px;
+ transition:.3s;
+}
+
+.box input:focus{
+ background:#111a2f;
+ box-shadow:0 0 18px #00f2ff66;
+}
+
+/* BUTTON */
+.box button{
+ margin-top:15px;
+ width:100%;
+ padding:14px;
+ border:none;
+ border-radius:30px;
+ background:linear-gradient(45deg,#ff00cc,#3333ff);
+ color:white;
+ font-size:16px;
+ font-weight:600;
+ cursor:pointer;
+ transition:.3s;
+ box-shadow:0 0 25px #ff00cc55;
+}
+
+.box button:hover{
+ transform:scale(1.05);
+ box-shadow:0 0 35px #ff00ccaa;
+}
+
+/* TEXT */
+.box p{
+ margin-top:18px;
+ color:#aaa;
+}
+
+/* LINK */
+.box a{
+ display:inline-block;
+ margin-top:8px;
+ text-decoration:none;
+ color:#00f2ff;
+ font-weight:600;
+ transition:.3s;
+}
+
+.box a:hover{
+ color:#ff00cc;
+ text-shadow:0 0 10px #ff00cc;
+}
+
+/* MESSAGE */
+#msg{
+ margin-top:15px;
+ font-size:14px;
+ font-weight:600;
+}
+
+/* MOBILE */
+@media(max-width:400px){
+ .box{width:90%}
+}

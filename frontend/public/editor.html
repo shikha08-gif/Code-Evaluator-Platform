@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Code Editor</title>
+
+<style>
+body{
+ font-family:Segoe UI;
+ background:#0f172a;
+ color:white;
+ display:flex;
+ justify-content:center;
+ padding:40px;
+}
+.box{
+ width:720px;
+ background:#111827;
+ padding:25px;
+ border-radius:14px;
+ box-shadow:0 0 25px rgba(0,0,0,.5);
+}
+.problem-box{
+ background:#1f2937;
+ padding:18px;
+ border-radius:12px;
+ margin-bottom:15px;
+}
+textarea,select{
+ width:100%;
+ padding:12px;
+ margin-top:10px;
+ border-radius:8px;
+ border:none;
+ background:#0f172a;
+ color:white;
+}
+button{
+ width:100%;
+ padding:12px;
+ margin-top:12px;
+ border:none;
+ border-radius:8px;
+ background:#3b82f6;
+ color:white;
+ font-weight:bold;
+ cursor:pointer;
+}
+button:hover{
+ background:#2563eb;
+}
+.back-btn{
+ width:auto;
+ position:fixed;
+ bottom:20px;
+ left:20px;
+ padding:12px 20px;
+ border:none;
+ border-radius:25px;
+ background:linear-gradient(135deg, #3b82f6, #2563eb);
+ color:white;
+ font-size:15px;
+ font-weight:600;
+ cursor:pointer;
+ transition:.3s;
+ border:2px solid #60a5fa;
+ z-index:1000;
+ box-shadow:0 0 20px rgba(59,130,246,0.4);
+ display:flex;
+ align-items:center;
+ gap:6px;
+}
+.back-btn:hover{
+ background:linear-gradient(135deg, #2563eb, #1d4ed8);
+ box-shadow:0 0 30px rgba(59,130,246,0.7);
+ transform:translateY(-3px);
+}
+#msg{
+ margin-top:15px;
+ background:#020617;
+ padding:12px;
+ border-radius:8px;
+ min-height:60px;
+}
+.top{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:10px;
+}
+</style>
+</head>
+<body>
+
+<button class="back-btn" onclick="goBack()">← Back to Problems</button>
+
+<div class="box">
+
+<div class="top">
+<h2>Code Editor</h2>
+<div id="timer"></div>
+</div>
+
+<p id="welcome"></p>
+
+<div class="problem-box">
+<h3 id="title">Loading...</h3>
+<p id="difficulty"></p>
+<p id="desc"></p>
+<pre id="input"></pre>
+<pre id="expected"></pre>
+</div>
+
+<select id="lang">
+<option value="java">Java</option>
+<option value="python">Python</option>
+<option value="node">JavaScript</option>
+</select>
+
+<textarea id="code" rows="12"></textarea>
+<textarea id="stdin" rows="3" placeholder="Custom Input"></textarea>
+
+<button onclick="runCode()">▶ Run Code (Ctrl+Enter)</button>
+<button onclick="submitCode()">Submit Code (Shift+Enter)</button>
+<button onclick="logout()">Logout</button>
+
+<pre id="msg"></pre>
+
+</div>
+
+<script>
+
+/* ================= USER ================= */
+
+const user = localStorage.getItem("user");
+if(!user){
+ alert("Login required");
+ location.href="login.html";
+}
+document.getElementById("welcome").innerText="Welcome "+user;
+
+
+/* ================= ELEMENTS ================= */
+
+const codeBox = document.getElementById("code");
+const langBox = document.getElementById("lang");
+const stdinBox = document.getElementById("stdin");
+const msgBox = document.getElementById("msg");
+
+
+/* ================= TIMER ================= */
+
+let time=300;
+let expired=false;
+
+const timer=setInterval(()=>{
+ if(time<=0){
+  expired=true;
+  clearInterval(timer);
+  document.getElementById("timer").innerText="⛔ Time Over";
+  return;
+ }
+ document.getElementById("timer").innerText="⏱ "+time+"s";
+ time--;
+},1000);
+
+
+/* ================= LOAD PROBLEM ================= */
+
+async function loadProblem(){
+ try{
+  const id=localStorage.getItem("pid");
+  if(!id) return;
+
+  const res=await fetch("/problem/"+id);
+  const data=await res.json();
+
+  document.getElementById("title").innerText=data.title;
+  document.getElementById("difficulty").innerHTML=
+   "Difficulty: "+
+   (data.difficulty=="Easy"?"🟢":
+    data.difficulty=="Medium"?"🟡":"🔴")
+   +" "+data.difficulty;
+
+  document.getElementById("desc").innerText=data.description;
+  document.getElementById("input").innerText="Input: "+data.sample_input;
+  document.getElementById("expected").innerText="Output: "+data.sample_output;
+
+  loadSavedCode();
+ }
+ catch{
+  document.getElementById("title").innerText="Failed to load problem";
+ }
+}
+loadProblem();
+
+
+/* ================= CODE TEMPLATES ================= */
+
+const templates={
+ java:`import java.util.*;
+public class Main{
+ public static void main(String[] args){
+  
+ }
+}`,
+ python:`# write code here`,
+ node:`// write code here`
+};
+
+
+/* change template */
+
+langBox.onchange=()=>{
+ codeBox.value = templates[langBox.value];
+ saveCode();
+};
+
+
+/* ================= SAVE CODE ================= */
+
+function saveCode(){
+ const pid=localStorage.getItem("pid");
+ localStorage.setItem("code_"+pid, codeBox.value);
+}
+
+function loadSavedCode(){
+ const pid=localStorage.getItem("pid");
+ const saved=localStorage.getItem("code_"+pid);
+ codeBox.value = saved || templates[langBox.value];
+}
+
+codeBox.addEventListener("input",saveCode);
+
+
+/* ================= SHORTCUT KEYS ================= */
+
+document.addEventListener("keydown",e=>{
+ if(e.ctrlKey && e.key==="Enter") runCode();
+ if(e.shiftKey && e.key==="Enter") submitCode();
+});
+
+
+/* ================= RUN ================= */
+
+async function runCode(){
+
+ if(expired) return alert("Time over");
+
+ msgBox.innerText="⏳ Running...";
+
+ try{
+  const res=await fetch("/run",{
+   method:"POST",
+   headers:{ "Content-Type":"application/json" },
+   body:JSON.stringify({
+    code: codeBox.value,
+    language: langBox.value,
+    input: stdinBox.value
+   })
+  });
+
+  const text = await res.text();
+  msgBox.innerText="▶ OUTPUT\n"+text;
+ }
+ catch{
+  msgBox.innerText="❌ Server offline";
+ }
+}
+
+
+/* ================= SUBMIT ================= */
+
+async function submitCode(){
+
+ if(expired) return alert("Time over");
+
+ msgBox.innerText="⏳ Judging...";
+
+ try{
+  const res=await fetch("/submit",{
+   method:"POST",
+   headers:{ "Content-Type":"application/json" },
+   body:JSON.stringify({
+    username:user,
+    code:codeBox.value,
+    language:langBox.value,
+    problemId:localStorage.getItem("pid")
+   })
+  });
+
+  const text = await res.text();
+  msgBox.innerText="📊 RESULT\n"+text;
+ }
+ catch{
+  msgBox.innerText="❌ Server offline";
+ }
+}
+
+
+/* ================= LOGOUT ================= */
+
+function logout(){
+ localStorage.removeItem("user");
+ location.href="login.html";
+}
+
+function goBack(){
+ window.history.back();
+}
+
+</script>
+</body>
+</html>

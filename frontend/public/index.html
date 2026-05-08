@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Code Platform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+/* RESET */
+*{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,sans-serif;}
+body{
+ background:#070916;
+ color:white;
+ overflow-x:hidden;
+ display:flex;
+ flex-direction:column;
+ min-height:100vh;
+}
+
+/* GRADIENT BACKGROUND */
+body::before{
+ content:"";
+ position:fixed;
+ width:200%;
+ height:200%;
+ background:
+ radial-gradient(circle at 20% 30%,#00f2ff22,transparent 40%),
+ radial-gradient(circle at 80% 70%,#ff00cc22,transparent 40%);
+ animation:bgmove 20s linear infinite alternate;
+ z-index:-1;
+}
+@keyframes bgmove{
+ from{transform:translate(0,0)}
+ to{transform:translate(-10%,-10%)}
+}
+
+/* NAVBAR */
+nav{
+ position:fixed;
+ width:100%;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ padding:14px 35px;
+ backdrop-filter:blur(20px);
+ background:rgba(255,255,255,0.03);
+ border-bottom:1px solid #00f2ff33;
+ z-index:1000;
+}
+
+nav h1{
+ background:linear-gradient(90deg,#00f2ff,#ff00cc);
+ -webkit-background-clip:text;
+ color:transparent;
+ font-size:24px;
+}
+nav button{
+ padding:8px 20px;
+ border:none;
+ border-radius:30px;
+ margin-left:8px;
+ font-weight:600;
+ cursor:pointer;
+ transition:.3s;
+}
+.login{background:#00f2ff;color:#002;}
+.register{background:#ff00cc;color:white;}
+nav button:hover{transform:scale(1.08);}
+
+/* SECTIONS */
+section{
+ padding:90px 10% 50px;
+ text-align:center;
+}
+
+/* HERO */
+.hero{margin-top:60px;}
+.hero h2{
+ font-size:70px;
+ background:linear-gradient(90deg,#00f2ff,#ff00cc,#00ff88);
+ -webkit-background-clip:text;
+ color:transparent;
+}
+.hero p{
+ margin:20px 0 40px;
+ font-size:22px;
+ color:#c9f7ff;
+}
+.cta{
+ padding:16px 42px;
+ border:none;
+ border-radius:40px;
+ background:linear-gradient(45deg,#ff00cc,#3333ff);
+ color:white;
+ font-size:20px;
+ cursor:pointer;
+ box-shadow:0 0 30px #ff00cc88;
+ transition:.3s;
+}
+.cta:hover{transform:scale(1.1);}
+
+/* FEATURES */
+.features{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+ gap:30px;
+ margin-top:50px;
+}
+.card{
+ padding:35px;
+ border-radius:20px;
+ background:rgba(255,255,255,0.05);
+ backdrop-filter:blur(20px);
+ transition:.4s;
+}
+.card:hover{
+ transform:translateY(-10px);
+ box-shadow:0 0 30px #00f2ff44;
+}
+.card h3{margin-bottom:15px}
+
+/* FOOTER */
+footer{
+ text-align:center;
+ padding:14px;
+ color:#aaa;
+ border-top:1px solid #ffffff22;
+ margin-top:auto;
+}
+
+/* FLOATING TECH WORDS */
+.tech{
+ position:absolute;
+ color:#ffffff18;
+ font-weight:bold;
+ pointer-events:none;
+ animation:float linear infinite;
+}
+@keyframes float{
+ from{transform:translateY(80vh)}
+ to{transform:translateY(-10vh)}
+}
+
+/* RESPONSIVE */
+@media(max-width:700px){
+ .hero h2{font-size:40px}
+ section{padding:90px 20px 40px}
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav>
+<h1>💻 Code Platform</h1>
+<div>
+<button class="login" onclick="location.href='./login.html'">Login</button>
+<button class="register" onclick="location.href='./register.html'">Register</button>
+<button class="login" onclick="location.href='./history.html'">History</button>
+</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+<h2>Welcome to Code Editor 🚀</h2>
+<p id="typing"></p>
+<button class="cta" onclick="location.href='./problems.html'">
+Start Coding
+</button>
+</section>
+
+<!-- FEATURES -->
+<section>
+<h2>Platform Features</h2>
+
+<div class="features">
+
+<div class="card">
+<h3>⚡ Fast Compiler</h3>
+<p>Run code instantly with lightning speed execution.</p>
+</div>
+
+<div class="card">
+<h3>🏆 Coding Challenges</h3>
+<p>Solve problems from beginner to advanced level.</p>
+</div>
+
+<div class="card">
+<h3>🌎 Multi Language</h3>
+<p>Supports Python, Java, C++, JS and more.</p>
+</div>
+
+<div class="card">
+<h3>📈 Skill Growth</h3>
+<p>Track your improvement and become pro.</p>
+</div>
+
+</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+© 2026 Code Platform — Built for Developers 🚀
+</footer>
+
+<script>
+
+/* FLOATING TECH WORDS */
+const words=["Python","Java","C++","JS","HTML","CSS","SQL","API","AI"];
+for(let i=0;i<40;i++){
+ let t=document.createElement("div");
+ t.className="tech";
+ t.innerText=words[Math.floor(Math.random()*words.length)];
+ t.style.left=Math.random()*80+10+"vw";
+ t.style.top=Math.random()*80+"vh";
+ t.style.fontSize=(Math.random()*22+14)+"px";
+ t.style.animationDuration=(Math.random()*10+10)+"s";
+ document.body.appendChild(t);
+}
+
+/* TYPING TEXT */
+const text=[
+"Build. Practice. Master.",
+"Compete globally.",
+"Sharpen logic daily.",
+"Become unstoppable."
+];
+
+let i=0,j=0,del=false;
+function type(){
+ let str=text[i];
+ j=del?j-1:j+1;
+ typing.innerText=str.substring(0,j);
+
+ if(!del && j==str.length){del=true;setTimeout(type,1000);return;}
+ if(del && j==0){del=false;i=(i+1)%text.length;}
+
+ setTimeout(type,del?40:80);
+}
+type();
+
+</script>
+
+</body>
+</html>
